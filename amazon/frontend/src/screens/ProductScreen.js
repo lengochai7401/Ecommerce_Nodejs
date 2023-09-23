@@ -5,7 +5,7 @@ import Col from 'react-bootstrap/Col';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
 import Button from 'react-bootstrap/Button';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Rating from '../components/Rating';
 import Card from 'react-bootstrap/Card';
 import { Helmet } from 'react-helmet-async';
@@ -15,50 +15,62 @@ import { getError } from '../utils';
 import { Store } from '../Store';
 
 export default function ProductScreen() {
+  const navigate = useNavigate();
   const params = useParams();
   const slug = params.slug;
 
+  // State variables for managing loading, errors, and product data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [product, setProduct] = useState({});
 
+  // Access the global state and dispatch function from the context
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart } = state;
 
+  // Fetch product data from the server when the component mounts
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError('');
 
       try {
+        // Fetch product data using the provided slug
         const result = await axios.get(`/api/products/slug/${slug}`);
         setProduct(result.data);
         setLoading(false);
       } catch (error) {
+        // Handle and display any errors that occur during the fetch
         setError(getError(error));
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchData(); // Call the fetchData function
   }, [slug]);
 
+  // Function to handle adding the product to the cart
   const addToCartHandler = async () => {
     const existItem = cart.cartItems.find((x) => x._id === product._id);
     const quantity = existItem ? existItem.quantity + 1 : 1;
     try {
+      // Fetch additional product data, including stock count
       const { data } = await axios.get(`/api/products/${product._id}`);
+
+      // Check if the product is in stock
       if (data.countInStock < quantity) {
         window.alert('Sorry. Product is out of stock');
         return;
       }
 
+      // Dispatch an action to add the product to the cart
       ctxDispatch({
         type: 'CART_ADD_ITEM',
         payload: { ...product, quantity },
       });
+      navigate('/cart');
     } catch (error) {
-      // Handle the error here if necessary
+      // Handle and display any errors that occur during the process
       window.alert(error.message);
     }
   };
@@ -69,10 +81,13 @@ export default function ProductScreen() {
         <title>{product.name}</title>
       </Helmet>
       {loading ? (
+        // Display a loading indicator while fetching data
         <LoadingBox />
       ) : error ? (
+        // Display an error message if an error occurred during fetch
         <MessageBox variant="danger">{error}</MessageBox>
       ) : (
+        // Display product details when data is loaded successfully
         <div>
           <Row>
             <Col md={6}>
@@ -85,16 +100,22 @@ export default function ProductScreen() {
             <Col md={3}>
               <ListGroup variant="flush">
                 <ListGroup.Item>
+                  {/* Display the product name */}
                   <h1>{product.name}</h1>
                 </ListGroup.Item>
                 <ListGroup.Item>
+                  {/* Display product rating and number of reviews */}
                   <Rating
                     rating={product.rating}
                     numReviews={product.numReviews}
                   />
                 </ListGroup.Item>
-                <ListGroup.Item>Price: ${product.price}</ListGroup.Item>
                 <ListGroup.Item>
+                  {/* Display product price */}
+                  Price: ${product.price}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  {/* Display product description */}
                   Description: <p>{product.description}</p>
                 </ListGroup.Item>
               </ListGroup>
@@ -113,6 +134,7 @@ export default function ProductScreen() {
                       <Row>
                         <Col>Status:</Col>
                         <Col>
+                          {/* Display product availability */}
                           {product.countInStock > 0 ? (
                             <Badge bg="success">In Stock</Badge>
                           ) : (
@@ -123,6 +145,7 @@ export default function ProductScreen() {
                     </ListGroup.Item>
                     <ListGroup.Item>
                       {product.countInStock > 0 && (
+                        // Display "Add to Cart" button if the product is in stock
                         <ListGroup.Item>
                           <div className="d-grid">
                             <Button
