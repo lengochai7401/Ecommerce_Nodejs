@@ -1,15 +1,22 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 
 export const Store = createContext();
 
 const initialState = {
   cart: {
-    cartItems: [],
+    cartItems: localStorage.getItem('cartItems')
+      ? JSON.parse(localStorage.getItem('cartItems'))
+      : [],
   },
 };
 
 export function StoreProvider(props) {
   const [state, setState] = useState(initialState);
+
+  // Add a useEffect hook to save cartItems to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(state.cart.cartItems));
+  }, [state.cart.cartItems]);
 
   const dispatch = (action) => {
     switch (action.type) {
@@ -39,7 +46,23 @@ export function StoreProvider(props) {
             },
           });
         }
+
         break;
+
+      case 'CART_REMOVE_ITEM': {
+        const cartItems = state.cart.cartItems.filter(
+          (item) => item._id !== action.payload._id
+        );
+        setState({
+          ...state,
+          cart: {
+            ...state.cart,
+            cartItems: cartItems,
+          },
+        });
+
+        break;
+      }
 
       default:
         return state;
