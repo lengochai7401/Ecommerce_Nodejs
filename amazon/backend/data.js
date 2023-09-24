@@ -1,7 +1,6 @@
 const data = {
   products: [
     {
-      _id: 1,
       name: 'Nike shirt',
       slug: 'Nike-shirt',
       category: 'shirts',
@@ -14,7 +13,6 @@ const data = {
       description: 'high quality shirt',
     },
     {
-      _id: 2,
       name: 'Adidas shirt',
       slug: 'Adidas-shirt',
       category: 'shirts',
@@ -27,7 +25,6 @@ const data = {
       description: 'high quality shirt',
     },
     {
-      _id: 3,
       name: 'Nike Pant',
       slug: 'Nike-Pant',
       category: 'pants',
@@ -40,7 +37,6 @@ const data = {
       description: 'high quality pant',
     },
     {
-      _id: 4,
       name: 'Adidas Pant',
       slug: 'Adidas-Pant',
       category: 'pants',
@@ -55,4 +51,4 @@ const data = {
   ],
 };
 
-module.exports = data;
+export default data;
