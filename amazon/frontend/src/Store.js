@@ -7,6 +7,9 @@ const initialState = {
     cartItems: localStorage.getItem('cartItems')
       ? JSON.parse(localStorage.getItem('cartItems'))
       : [],
+    shippingAddress: localStorage.getItem('shippingAddress')
+      ? JSON.parse(localStorage.getItem('shippingAddress'))
+      : {},
   },
   userInfo: localStorage.getItem('userInfo')
     ? JSON.parse(localStorage.getItem('userInfo'))
@@ -71,9 +74,24 @@ export function StoreProvider(props) {
         setState({ ...state, userInfo: action.payload });
         break;
       case 'USER_SIGNOUT':
-        setState({ ...state, userInfo: null });
-        break;
+        setState({
+          ...state,
+          userInfo: null,
+          cart: {
+            ...state.cart,
+            shippingAddress: {},
+            cartItems: [],
+          },
+        });
 
+        break;
+      case 'SAVE_SHIPPING_ADDRESS': {
+        setState({
+          ...state,
+          cart: { ...state.cart, shippingAddress: action.payload },
+        });
+        break;
+      }
       default:
         return state;
     }
