@@ -8,6 +8,9 @@ const initialState = {
       ? JSON.parse(localStorage.getItem('cartItems'))
       : [],
   },
+  userInfo: localStorage.getItem('userInfo')
+    ? JSON.parse(localStorage.getItem('userInfo'))
+    : null,
 };
 
 export function StoreProvider(props) {
@@ -63,6 +66,13 @@ export function StoreProvider(props) {
 
         break;
       }
+
+      case 'USER_SIGNIN':
+        setState({ ...state, userInfo: action.payload });
+        break;
+      case 'USER_SIGNOUT':
+        setState({ ...state, userInfo: null });
+        break;
 
       default:
         return state;
