@@ -10,6 +10,9 @@ const initialState = {
     shippingAddress: localStorage.getItem('shippingAddress')
       ? JSON.parse(localStorage.getItem('shippingAddress'))
       : {},
+    paymentMethod: localStorage.getItem('paymentMethod')
+      ? localStorage.getItem('paymentMethod')
+      : '',
   },
   userInfo: localStorage.getItem('userInfo')
     ? JSON.parse(localStorage.getItem('userInfo'))
@@ -81,6 +84,7 @@ export function StoreProvider(props) {
             ...state.cart,
             shippingAddress: {},
             cartItems: [],
+            paymentMethod: '',
           },
         });
 
@@ -89,6 +93,16 @@ export function StoreProvider(props) {
         setState({
           ...state,
           cart: { ...state.cart, shippingAddress: action.payload },
+        });
+        break;
+      }
+      case 'SAVE_PAYMENT_METHOD': {
+        setState({
+          ...state,
+          cart: {
+            ...state.cart,
+            paymentMethod: action.payload,
+          },
         });
         break;
       }
