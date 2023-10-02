@@ -73,6 +73,11 @@ export function StoreProvider(props) {
         break;
       }
 
+      case 'CART_CLEAR': {
+        setState({ ...state, cart: { ...state.cart, cartItems: [] } });
+        break;
+      }
+
       case 'USER_SIGNIN':
         setState({ ...state, userInfo: action.payload });
         break;
