@@ -52,7 +52,7 @@ export default function PlaceOrderScreen() {
       );
       ctxDispatch({ type: 'CART_CLEAR' });
       localStorage.removeItem('cartItems');
-      navigate(`/orders/${data.order._id}`);
+      navigate(`/order/${data.order._id}`);
     } catch (error) {
       toast.error(getError(error));
     }

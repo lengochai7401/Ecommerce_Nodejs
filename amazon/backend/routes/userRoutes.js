@@ -2,7 +2,7 @@ import express from 'express';
 import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
 import expressAsyncHandler from 'express-async-handler'; // Add this line
-import { generateToken } from '../utils.js';
+import { generateToken, isAuth } from '../utils.js';
 
 const userRouter = express.Router();
 
@@ -51,6 +51,41 @@ userRouter.post(
         // Other types of errors
         res.status(500).json({ message: 'Server error' });
       }
+    }
+  })
+);
+
+userRouter.put(
+  '/profile',
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.name = req.body.name || user.name;
+      if (req.body.email !== user.email) {
+        // Check if the new email already exists in the database
+        const existingUser = await User.findOne({ email: req.body.email });
+        if (existingUser) {
+          res.status(400).send({ message: 'Email already in use' });
+          return;
+        }
+
+        user.email = req.body.email || user.email;
+      }
+      if (req.body.password) {
+        user.password = bcrypt.hashSync(req.body.password, 10);
+      }
+      await User.updateOne({ _id: user._id }, user, { upsert: true });
+      const userUpdated = await User.findById(req.user._id); // Fetch the updated user
+      res.send({
+        _id: userUpdated._id,
+        name: userUpdated.name,
+        email: userUpdated.email,
+        isAdmin: userUpdated.isAdmin,
+        token: generateToken(userUpdated),
+      });
+    } else {
+      res.status(404).send({ message: 'User not found' });
     }
   })
 );
