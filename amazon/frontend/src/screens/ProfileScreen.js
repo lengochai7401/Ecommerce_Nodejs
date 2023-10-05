@@ -20,12 +20,8 @@ export default function ProfileScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    if (!userInfo) {
-      navigate('/signin');
-    } else {
-      setName(userInfo.name);
-      setEmail(userInfo.email);
-    }
+    setName(userInfo.name);
+    setEmail(userInfo.email);
   }, [userInfo, navigate]);
 
   const submitHandler = async (e) => {
