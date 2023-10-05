@@ -19,8 +19,6 @@ export default function ProfileScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [loadingUpdate, setLoadingUpdate] = useState(false);
-
   useEffect(() => {
     if (!userInfo) {
       navigate('/signin');
@@ -48,14 +46,13 @@ export default function ProfileScreen() {
           headers: { authorization: `Bearer ${userInfo.token}` },
         }
       );
-      setLoadingUpdate(false);
+
       ctxDispatch({ type: 'USER_SIGNIN', payload: data });
       localStorage.setItem('userInfo', JSON.stringify(data));
       toast.success('User updated successfully');
       setPassword('');
       setConfirmPassword('');
     } catch (error) {
-      setLoadingUpdate(false);
       getError(error);
     }
   };

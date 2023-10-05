@@ -83,3 +83,9 @@ main {
 .active-nav {
   left: 0;
 }
+.text-bold {
+  font-weight: bold;
+}
+.indent {
+  margin-left: 20px; /* Adjust the margin as needed for your desired indentation */
+}

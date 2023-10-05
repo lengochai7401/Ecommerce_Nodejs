@@ -1,14 +1,101 @@
-import express from 'express';
+import express, { query } from 'express';
 import Product from '../models/productModel.js';
 import expressAsyncHandler from 'express-async-handler';
 
 const productRouter = express.Router();
 
+// Route này trả về tất cả sản phẩm
 productRouter.get('/', async (req, res) => {
   const products = await Product.find();
   res.send(products);
 });
 
+const PAGE_SIZE = 3;
+
+// Route này được sử dụng để tìm kiếm sản phẩm dựa trên các tham số truy vấn
+productRouter.get(
+  '/search',
+  expressAsyncHandler(async (req, res) => {
+    const { query } = req;
+    const pageSize = query.pageSize || PAGE_SIZE;
+    const page = query.page || 1;
+    const category = query.category || '';
+    const price = query.price || '';
+    const rating = query.rating || '';
+    const order = query.order || '';
+    const searchQuery = query.query || '';
+
+    // Xây dựng các bộ lọc dựa trên các tham số truy vấn
+    const queryFilter =
+      searchQuery && searchQuery !== 'all' // searchQuery tồn tại và khác 'all'
+        ? {
+            name: {
+              $regex: searchQuery, // so sánh tên sản phẩm với searchQuery
+              $options: 'i', // tìm kiếm không phân biệt chữ hoa chữ thường
+            },
+          }
+        : {};
+    const categoryFilter = category && category !== 'all' ? { category } : {};
+    const ratingFilter =
+      rating && rating !== 'all'
+        ? {
+            rating: {
+              $gte: Number(rating), // lọc các sản phẩm có xếp hạng lớn hơn hoặc bằng giá trị của biến rating
+            },
+          }
+        : {};
+    const priceFilter =
+      price && price !== 'all'
+        ? {
+            // 1-50
+            price: {
+              // lọc các sản phẩm có giá nằm trong khoảng min-max
+              $gte: Number(price.split('-')[0]),
+              $lte: Number(price.split('-')[1]),
+            },
+          }
+        : {};
+    const sortOrder =
+      order === 'featured'
+        ? { featured: -1 }
+        : order === 'lowest'
+        ? { price: 1 }
+        : order === 'highest'
+        ? { price: -1 }
+        : order === 'toprated'
+        ? { rating: -1 }
+        : order === 'newest'
+        ? { createdAt: -1 }
+        : { _id: -1 };
+
+    // Truy vấn CSDL để lấy danh sách sản phẩm
+    const products = await Product.find({
+      ...queryFilter,
+      ...categoryFilter,
+      ...priceFilter,
+      ...ratingFilter,
+    })
+      .sort(sortOrder)
+      .skip(pageSize * (page - 1))
+      .limit(pageSize);
+
+    // Đếm tổng số sản phẩm phù hợp với bộ lọc
+    const countProducts = await Product.countDocuments({
+      ...queryFilter,
+      ...categoryFilter,
+      ...priceFilter,
+      ...ratingFilter,
+    });
+    res.send({
+      products,
+      countProducts,
+      page,
+      pages: Math.ceil(countProducts / pageSize),
+    });
+  })
+);
+
+// Route này trả về danh sách các danh mục sản phẩm
 productRouter.get(
   '/categories',
   expressAsyncHandler(async (req, res) => {
@@ -22,6 +109,7 @@ productRouter.get(
   })
 );
 
+// Route này trả về sản phẩm dựa trên slug
 productRouter.get('/slug/:slug', async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug });
   if (product) res.send(product);
