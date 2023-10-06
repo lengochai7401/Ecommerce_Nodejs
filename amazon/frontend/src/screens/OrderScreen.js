@@ -73,46 +73,50 @@ export default function OrderScreen() {
   }
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const { data } = await axios.get(`/api/orders/${orderId}`, {
-          headers: { authorization: `Bearer ${userInfo.token}` },
-        });
-        setLoading(false);
-        setError('');
-        setOrder(data);
-      } catch (err) {
-        setLoading(false);
-        setError(getError(err));
-      }
-    };
-
-    if (!userInfo) {
-      navigate('/login');
-    }
-    if (!order._id || successPay || (order._id && order._id !== orderId)) {
-      fetchOrder();
-      if (successPay) {
-        setLoadingPay(false);
-        setSuccessPay(false);
-      }
-    } else {
-      const loadPaypalScript = async () => {
-        const { data: clientId } = await axios.get('/api/keys/paypal', {
-          headers: { authorization: `Bearer ${userInfo.token}` },
-        });
-        paypalDispatch({
-          type: 'resetOptions',
-          value: {
-            'client-id': clientId,
-            currency: 'USD',
-          },
-        });
-        paypalDispatch({ type: 'setLoadingStatus', value: 'pending' });
+    try {
+      const fetchOrder = async () => {
+        try {
+          setLoading(true);
+          setError('');
+          const { data } = await axios.get(`/api/orders/${orderId}`, {
+            headers: { authorization: `Bearer ${userInfo.token}` },
+          });
+          setLoading(false);
+          setError('');
+          setOrder(data);
+        } catch (err) {
+          setLoading(false);
+          setError(getError(err));
+        }
       };
-      loadPaypalScript();
+
+      if (!userInfo) {
+        navigate('/login');
+      }
+      if (!order._id || successPay || (order._id && order._id !== orderId)) {
+        fetchOrder();
+        if (successPay) {
+          setLoadingPay(false);
+          setSuccessPay(false);
+        }
+      } else {
+        const loadPaypalScript = async () => {
+          const { data: clientId } = await axios.get('/api/keys/paypal', {
+            headers: { authorization: `Bearer ${userInfo.token}` },
+          });
+          paypalDispatch({
+            type: 'resetOptions',
+            value: {
+              'client-id': clientId,
+              currency: 'USD',
+            },
+          });
+          paypalDispatch({ type: 'setLoadingStatus', value: 'pending' });
+        };
+        loadPaypalScript();
+      }
+    } catch (error) {
+      window.location.reload();
     }
   }, [userInfo, navigate, order, orderId, paypalDispatch, successPay]);
 

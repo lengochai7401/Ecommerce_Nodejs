@@ -1,6 +1,7 @@
 import express, { query } from 'express';
 import Product from '../models/productModel.js';
 import expressAsyncHandler from 'express-async-handler';
+import { isAdmin, isAuth } from '../utils.js';
 
 const productRouter = express.Router();
 
@@ -86,6 +87,28 @@ productRouter.get(
       ...priceFilter,
       ...ratingFilter,
     });
+    res.send({
+      products,
+      countProducts,
+      page,
+      pages: Math.ceil(countProducts / pageSize),
+    });
+  })
+);
+
+productRouter.get(
+  '/admin',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const { query } = req;
+    const page = query.page || 1;
+    const pageSize = query.pageSize || PAGE_SIZE;
+
+    const products = await Product.find()
+      .skip(pageSize * (page - 1)) // bỏ qua các product trước đó và lấy các sản phẩm hiện tại
+      .limit(pageSize); // giới hạn lấy pageSize sản phẩm trên 1 trang
+    const countProducts = await Product.countDocuments();
     res.send({
       products,
       countProducts,
