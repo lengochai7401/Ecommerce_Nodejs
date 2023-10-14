@@ -100,4 +100,49 @@ userRouter.put(
   })
 );
 
+userRouter.get(
+  '/:id',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      res.send(user);
+    } else {
+      res.status(404).send({ message: 'User Not Found' });
+    }
+  })
+);
+
+userRouter.put(
+  '/:id',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      user.name = req.body.name || user.name;
+      if (req.body.email !== user.email) {
+        // Check if the new email already exists in the database
+        const existingUser = await User.findOne({ email: req.body.email });
+        if (existingUser) {
+          res.status(400).send({ message: 'Email already in use' });
+          return;
+        }
+
+        user.email = req.body.email || user.email;
+      }
+      if (req.body.password) {
+        user.password = bcrypt.hashSync(req.body.password, 10);
+      }
+      user.isAdmin = req.body.isAdmin;
+      await User.updateOne({ _id: user._id }, user, { upsert: true });
+      const userUpdated = await User.findById(req.user._id); // Fetch the updated user
+      res.send({ message: 'User Updated', user: userUpdated });
+    } else {
+      res.status(404).send({ message: 'User Not Found' });
+    }
+  })
+);
+
 export default userRouter;
