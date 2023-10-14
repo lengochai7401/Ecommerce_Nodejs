@@ -24,7 +24,10 @@ export default function PlaceOrderScreen() {
   const round2 = (num) => Math.round(num * 100 + Number.EPSILON) / 100;
 
   cart.itemsPrice = round2(
-    cart.cartItems.reduce((a, c) => a + c.quantity * c.price, 0)
+    cart.cartItems.reduce(
+      (a, c) => a + c.quantity * c.price * (1 - c.discount / 100),
+      0
+    )
   );
   cart.shippingPrice = cart.itemsPrice > 100 ? round2(0) : round2(10);
   cart.taxPrice = round2(0.15 * cart.itemsPrice);
@@ -63,6 +66,32 @@ export default function PlaceOrderScreen() {
       navigate('/payment');
     }
   }, [cart, navigate]);
+
+  useEffect(() => {
+    const updateDiscounts = () => {
+      // Calculate and update discounts based on expiry times
+      const now = Math.floor(Date.now() / 1000);
+      const updatedCartItems = cart.cartItems.map((item) => {
+        if (now >= item.expiryDiscount) {
+          return { ...item, discount: 0 };
+        }
+        return item;
+      });
+
+      ctxDispatch({
+        type: 'CART_SET_ITEMS',
+        payload: updatedCartItems,
+      });
+    };
+
+    // Set up an interval to periodically update discounts
+    const interval = setInterval(() => {
+      updateDiscounts();
+    }, 1000);
+
+    // Clear the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, [cart.cartItems, ctxDispatch]);
 
   return (
     <div className="">
@@ -112,7 +141,24 @@ export default function PlaceOrderScreen() {
                       <Col md={3}>
                         <span>{item.quantity}</span>
                       </Col>
-                      <Col md={3}>${item.price}</Col>
+                      <Col md={3}>
+                        $
+                        {item.discount ? (
+                          <>
+                            <span style={{ textDecoration: 'line-through' }}>
+                              {item.price * item.quantity}
+                            </span>{' '}
+                            <strong>
+                              $
+                              {item.price *
+                                item.quantity *
+                                (1 - item.discount / 100)}
+                            </strong>
+                          </>
+                        ) : (
+                          `${item.price}`
+                        )}
+                      </Col>
                     </Row>
                   </ListGroup.Item>
                 ))}

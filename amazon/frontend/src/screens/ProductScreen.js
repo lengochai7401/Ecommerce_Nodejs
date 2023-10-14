@@ -28,6 +28,8 @@ export default function ProductScreen() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart } = state;
 
+  const [discount, setDiscount] = useState(product.discount);
+
   // Fetch product data from the server when the component mounts
   useEffect(() => {
     const fetchData = async () => {
@@ -48,6 +50,20 @@ export default function ProductScreen() {
 
     fetchData(); // Call the fetchData function
   }, [slug]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Math.floor(Date.now() / 1000);
+      if (now >= product.expiryDiscount) {
+        setDiscount(0);
+      } else {
+        setDiscount(product.discount);
+      }
+    }, 1000);
+
+    // Clear the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, [product.expiryDiscount, product.discount]);
 
   // Function to handle adding the product to the cart
   const addToCartHandler = async () => {
@@ -112,7 +128,17 @@ export default function ProductScreen() {
                 </ListGroup.Item>
                 <ListGroup.Item>
                   {/* Display product price */}
-                  Price: ${product.price}
+                  Price:{' '}
+                  {discount ? (
+                    <>
+                      <span style={{ textDecoration: 'line-through' }}>
+                        ${product.price}
+                      </span>{' '}
+                      <strong>${product.price * (1 - discount / 100)}</strong>
+                    </>
+                  ) : (
+                    `${product.price}`
+                  )}
                 </ListGroup.Item>
                 <ListGroup.Item>
                   {/* Display product description */}
@@ -127,7 +153,21 @@ export default function ProductScreen() {
                     <ListGroup.Item>
                       <Row>
                         <Col>Price:</Col>
-                        <Col>${product.price}</Col>
+                        <Col>
+                          $
+                          {discount ? (
+                            <>
+                              <span style={{ textDecoration: 'line-through' }}>
+                                ${product.price}
+                              </span>{' '}
+                              <strong>
+                                ${product.price * (1 - discount / 100)}
+                              </strong>
+                            </>
+                          ) : (
+                            `${product.price}`
+                          )}
+                        </Col>
                       </Row>
                     </ListGroup.Item>
                     <ListGroup.Item>

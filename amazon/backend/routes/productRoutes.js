@@ -2,6 +2,7 @@ import express, { query } from 'express';
 import Product from '../models/productModel.js';
 import expressAsyncHandler from 'express-async-handler';
 import { isAdmin, isAuth } from '../utils.js';
+import cron from 'node-cron';
 
 const productRouter = express.Router();
 
@@ -96,6 +97,18 @@ productRouter.get(
   })
 );
 
+productRouter.get('/with-discount', async (req, res) => {
+  try {
+    const products = await Product.find({ discount: { $gt: 0 } }).sort({
+      discount: -1,
+    }); // Sort by discount in descending order
+    res.send(products);
+  } catch (error) {
+    console.error('Error fetching products with discount:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 // Route này để admin quản lí các product
 productRouter.get(
   '/admin',
@@ -136,6 +149,9 @@ productRouter.post(
       rating: 0,
       numReviews: 0,
       description: 'sample description',
+      sold: 0,
+      discount: 10,
+      expiryDiscount: 1697220806,
     });
     const product = await newProduct.save();
     res.send({ message: 'Product Created', product });
@@ -210,5 +226,53 @@ productRouter.put(
     }
   })
 );
+
+productRouter.use(async (req, res, next) => {
+  try {
+    const products = await Product.find().exec(); // Fetch all products from the database
+
+    products.forEach(async (product) => {
+      const now = new Date();
+      if (
+        product.discount !== 0 &&
+        product.expiryDiscount < now.getTime() / 1000
+      ) {
+        product.discount = 0; // Reset discount to 0
+        product.expiryDiscount = 0; // Reset expiryDiscount to the current date
+        await product.save(); // Save the updated product
+      }
+    });
+  } catch (error) {
+    console.error('Error updating product discounts:', error);
+  }
+  next(); // Continue to the route handlers
+});
+
+const updateProductDiscounts = async () => {
+  try {
+    const products = await Product.find().exec(); // Fetch all products from the database
+
+    products.forEach(async (product) => {
+      const now = new Date();
+      if (
+        product.discount !== 0 &&
+        product.expiryDiscount < now.getTime() / 1000
+      ) {
+        product.discount = 0; // Reset discount to 0
+        product.expiryDiscount = 0; // Reset expiryDiscount to the current date
+        await product.save(); // Save the updated product
+      }
+    });
+  } catch (error) {
+    console.error('Error updating product discounts:', error);
+  }
+};
+
+updateProductDiscounts();
+
+// Schedule the updateProductDiscounts function to run every minute
+cron.schedule('* * * * *', () => {
+  updateProductDiscounts();
+});
 
 export default productRouter;

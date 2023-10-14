@@ -1,5 +1,21 @@
 import bcrypt from 'bcrypt';
 
+function calculateExpiryDate(days, hours, minutes) {
+  // Get the current date and time
+  const now = new Date();
+
+  // Calculate the expiry duration in milliseconds
+  const expiryDurationInSeconds =
+    days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60;
+
+  // Calculate the expiry date in seconds
+  const expiryInSeconds = Math.floor(
+    now.getTime() / 1000 + expiryDurationInSeconds
+  );
+
+  return expiryInSeconds;
+}
+
 const data = {
   users: [
     {
@@ -26,6 +42,9 @@ const data = {
       rating: 4.5,
       numReviews: 10,
       description: 'high quality shirt',
+      sold: 10,
+      discount: 10,
+      expiryDiscount: calculateExpiryDate(1, 2, 3),
     },
     {
       name: 'Adidas shirt',
@@ -38,6 +57,9 @@ const data = {
       rating: 4.3,
       numReviews: 10,
       description: 'high quality shirt',
+      sold: 20,
+      discount: 5,
+      expiryDiscount: calculateExpiryDate(2, 2, 3),
     },
     {
       name: 'Nike Pant',
@@ -50,6 +72,9 @@ const data = {
       rating: 4,
       numReviews: 10,
       description: 'high quality pant',
+      sold: 0,
+      discount: 20,
+      expiryDiscount: calculateExpiryDate(0, 0, 1),
     },
     {
       name: 'Adidas Pant',
@@ -62,6 +87,9 @@ const data = {
       rating: 4.4,
       numReviews: 10,
       description: 'high quality pant',
+      sold: 30,
+      discount: 0,
+      expiryDiscount: 0,
     },
   ],
 };

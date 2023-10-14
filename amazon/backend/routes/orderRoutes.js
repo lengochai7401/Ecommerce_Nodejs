@@ -109,7 +109,13 @@ orderRouter.put(
         update_time: req.body.update_time,
         email_address: req.body.email_address,
       };
-
+      for (const orderItem of order.orderItems) {
+        const product = await Product.findOne({ slug: orderItem.slug });
+        if (product) {
+          product.sold += orderItem.quantity;
+          await product.save();
+        }
+      }
       const updateOrder = await order.save();
       res.send({ message: 'Order Paid', order: updateOrder });
     } else {

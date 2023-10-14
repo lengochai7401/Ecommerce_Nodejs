@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Store } from '../Store';
 import { Helmet } from 'react-helmet-async';
 import Row from 'react-bootstrap/Row';
@@ -16,6 +16,33 @@ export default function CartScreen() {
   const {
     cart: { cartItems },
   } = state;
+
+  useEffect(() => {
+    const updateDiscounts = () => {
+      // Calculate and update discounts based on expiry times
+      const now = Math.floor(Date.now() / 1000);
+      const updatedCartItems = cartItems.map((item) => {
+        if (now >= item.expiryDiscount) {
+          return { ...item, discount: 0 };
+        }
+        return item;
+      });
+
+      ctxDispatch({
+        type: 'CART_SET_ITEMS',
+        payload: updatedCartItems,
+      });
+    };
+
+    // Set up an interval to periodically update discounts
+    const interval = setInterval(() => {
+      updateDiscounts();
+    }, 1000);
+
+    // Clear the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, [cartItems, ctxDispatch]);
+
   const updateCartHandler = async (item, quantity) => {
     const { data } = await axios.get(`/api/products/${item._id}`);
 
@@ -85,7 +112,24 @@ export default function CartScreen() {
                         <i className="fas fa-plus-circle"></i>
                       </Button>
                     </Col>
-                    <Col md={3}>${item.price * item.quantity}</Col>
+                    <Col md={3}>
+                      $
+                      {item.discount ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through' }}>
+                            {item.price * item.quantity}
+                          </span>{' '}
+                          <strong>
+                            $
+                            {item.price *
+                              item.quantity *
+                              (1 - item.discount / 100)}
+                          </strong>
+                        </>
+                      ) : (
+                        `${item.price}`
+                      )}
+                    </Col>
                     <Col md={2}>
                       <Button
                         variant="light"
@@ -108,7 +152,11 @@ export default function CartScreen() {
                   <h3>
                     Subtotal ({cartItems.reduce((a, c) => a + c.quantity, 0)}){' '}
                     items) : $
-                    {cartItems.reduce((a, c) => a + c.quantity * c.price, 0)}
+                    {cartItems.reduce(
+                      (a, c) =>
+                        a + c.quantity * c.price * (1 - c.discount / 100),
+                      0
+                    )}
                   </h3>
                 </ListGroup.Item>
                 <ListGroup.Item>
