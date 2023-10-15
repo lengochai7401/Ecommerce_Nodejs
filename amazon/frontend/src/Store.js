@@ -3,13 +3,14 @@ import React, { createContext, useEffect, useState } from 'react';
 export const Store = createContext();
 
 const initialState = {
+  fullBox: false,
   cart: {
     cartItems: localStorage.getItem('cartItems')
       ? JSON.parse(localStorage.getItem('cartItems'))
       : [],
     shippingAddress: localStorage.getItem('shippingAddress')
       ? JSON.parse(localStorage.getItem('shippingAddress'))
-      : {},
+      : { location: {} },
     paymentMethod: localStorage.getItem('paymentMethod')
       ? localStorage.getItem('paymentMethod')
       : '',
@@ -29,6 +30,12 @@ export function StoreProvider(props) {
 
   const dispatch = (action) => {
     switch (action.type) {
+      case 'SET_FULLBOX_ON':
+        setState({ ...state, fullBox: true });
+        break;
+      case 'SET_FULLBOX_OFF':
+        setState({ ...state, fullBox: false });
+        break;
       case 'CART_ADD_ITEM':
         // add to cart
         const newItem = action.payload;
@@ -109,6 +116,19 @@ export function StoreProvider(props) {
         });
         break;
       }
+      case 'SAVE_SHIPPING_ADDRESS_MAP_LOCATION':
+        setState({
+          ...state,
+          cart: {
+            ...state.cart,
+            shippingAddress: {
+              ...state.cart.shippingAddress,
+              location: action.payload,
+            },
+          },
+        });
+        break;
+
       case 'SAVE_PAYMENT_METHOD': {
         setState({
           ...state,
